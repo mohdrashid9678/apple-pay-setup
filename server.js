@@ -15,8 +15,8 @@ const MERCHANT_IDENTIFIER = "merchant.com.thankiopay";
 const DISPLAY_NAME = "Robonito Test Store";
 
 const httpsAgent = new https.Agent({
-  cert: fs.readFileSync(path.join(__dirname, "./certs/merchant_id.pem")),
-  key: fs.readFileSync(path.join(__dirname, "./certs/merchant_id.key")),
+  cert: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.pem")),
+  key: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.key")),
 });
 
 app.post("/validate-merchant", async (req, res) => {
@@ -31,7 +31,10 @@ app.post("/validate-merchant", async (req, res) => {
         initiative: "web",
         initiativeContext: domainName,
       },
-      { httpsAgent: {}, headers: { "Content-Type": "application/json" } }
+      {
+        httpsAgent: httpsAgent,
+        headers: { "Content-Type": "application/json" },
+      }
     );
     console.log(
       "Merchant validation response:",
