@@ -18,7 +18,7 @@ async function onApplePayClicked() {
       supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
-        merchantIdentifier: "merchant.com.thankiopay", // Verify this matches Apple Portal
+        merchantIdentifier: "merchant.com.thankiopay",
         merchantCapabilities: ["supports3DS"],
         supportedNetworks: ["visa", "masterCard", "amex", "discover"],
         countryCode: "US",
@@ -33,70 +33,48 @@ async function onApplePayClicked() {
     },
   };
 
-  const options = {
-    requestPayerName: true,
-    requestPayerEmail: true,
-  };
-
   try {
-    const request = new PaymentRequest(methods, details, options);
+    const request = new PaymentRequest(methods, details);
 
-    // DEBUG: Monitor state changes
-    log(`Request created with state: ${request.state}`);
-
-    // 1. Merchant Validation
+    // FIX 1: Explicitly handle the validation event
     request.onmerchantvalidation = (event) => {
-      log(`Validation triggered for URL: ${event.validationURL}`);
+      log("Merchant validation event fired...");
 
       const sessionPromise = fetch("/validate-merchant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           validationURL: event.validationURL,
-          initiativeContext: window.location.hostname, // Important: no protocol/path
+          // FIX 2: Send ONLY the hostname, no https://
+          domainName: window.location.hostname,
         }),
       })
-        .then((res) => {
-          if (!res.ok)
-            throw new Error(`Server validation failed: ${res.statusText}`);
-          return res.json();
-        })
-        .then((session) => {
-          log("Merchant Session received from server.");
-          return session;
+        .then((res) => res.json())
+        .catch((err) => {
+          log("Backend failed to fetch session");
+          throw err;
         });
 
-      // Pass the promise to complete validation
       event.complete(sessionPromise);
     };
 
-    // 2. REQUIRED: Avoid timeout errors by handling method/shipping changes
-    request.onpaymentmethodchange = (event) => {
-      log("Payment method changed, updating sheet...");
-      event.updateWith({});
-    };
+    // FIX 3: Required to prevent some AbortErrors in newer Safari versions
+    request.onpaymentmethodchange = (ev) => ev.updateWith({});
 
-    // 3. Authorization
+    log("Opening Apple Pay sheet...");
     const response = await request.show();
-    log("User authorized payment.");
 
-    // Process payment token with your backend
-    const paymentResult = await processPayment(response.details);
-
-    if (paymentResult.success) {
-      await response.complete("success");
-      log("Transaction Success!");
-    } else {
-      await response.complete("fail");
-      log("Transaction Failed on Server.");
-    }
+    // If we get here, the user authorized the payment
+    log("Payment authorized!");
+    await response.complete("success");
   } catch (err) {
-    // Critical for debugging: AbortError often means a config issue or user cancel
-    log(`Error: ${err.name} - ${err.message}`);
-    console.error("Full Error Object:", err);
+    if (err.name === "AbortError") {
+      log("AbortError: Sheet closed (Check Domain Verification or Certs)");
+    } else {
+      log(`Error: ${err.message}`);
+    }
   }
 }
-
 // Utility for server processing
 async function processPayment(details) {
   log("Sending token to backend for processing...");

@@ -20,7 +20,7 @@ const DISPLAY_NAME = "Robonito Test Store";
 // });
 
 app.post("/validate-merchant", async (req, res) => {
-  const { validationURL, origin } = req.body;
+  const { validationURL, domainName } = req.body;
 
   try {
     const response = await axios.post(
@@ -29,7 +29,7 @@ app.post("/validate-merchant", async (req, res) => {
         merchantIdentifier: MERCHANT_IDENTIFIER,
         displayName: DISPLAY_NAME,
         initiative: "web",
-        initiativeContext: new URL(origin).host,
+        initiativeContext: domainName,
       },
       { httpsAgent: {}, headers: { "Content-Type": "application/json" } }
     );
