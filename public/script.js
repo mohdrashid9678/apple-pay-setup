@@ -68,6 +68,7 @@ async function onApplePayClicked() {
         log("Merchant Validation Failed.");
       });
   };
+  console.log("Payment Request created:", request);
 
   // 6. Handle Payment Authorization (Source: "Authorize the Payment" section)
   try {
