@@ -13,13 +13,12 @@ if (window.PaymentRequest) {
 }
 
 async function onApplePayClicked() {
-  // 2. Define Payment Methods (Source: "Payment methods" section)
   const methods = [
     {
       supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
-        merchantIdentifier: "merchant.com.thankiopay",
+        merchantIdentifier: "merchant.com.thankiopay", // Verify this matches Apple Portal
         merchantCapabilities: ["supports3DS"],
         supportedNetworks: ["visa", "masterCard", "amex", "discover"],
         countryCode: "US",
@@ -27,7 +26,6 @@ async function onApplePayClicked() {
     },
   ];
 
-  // 3. Define Payment Details (Total, items)
   const details = {
     total: {
       label: "Robonito Store",
@@ -35,57 +33,77 @@ async function onApplePayClicked() {
     },
   };
 
-  // 4. Define Options (Requesting shipping, etc.)
   const options = {
     requestPayerName: true,
     requestPayerEmail: true,
   };
 
-  // Create the Request
-  const request = new PaymentRequest(methods, details, options);
-
-  // 5. Handle Merchant Validation (Source: "Complete merchant validation" section)
-  request.onmerchantvalidation = (event) => {
-    log("Validating Merchant...");
-
-    // Fetch the session from YOUR backend, not Apple directly
-    const merchantSessionPromise = fetch("/validate-merchant", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        validationURL: event.validationURL,
-        origin: window.location.origin,
-      }),
-    })
-      .then((res) => res.json())
-      .then((session) => {
-        log("Merchant Validated.");
-        // Pass the opaque session object to complete the validation
-        event.complete(session);
-      })
-      .catch((err) => {
-        console.error("Error fetching merchant session", err);
-        log("Merchant Validation Failed.");
-      });
-  };
-  console.log("Payment Request created:", request);
-
-  // 6. Handle Payment Authorization (Source: "Authorize the Payment" section)
   try {
+    const request = new PaymentRequest(methods, details, options);
+
+    // DEBUG: Monitor state changes
+    log(`Request created with state: ${request.state}`);
+
+    // 1. Merchant Validation
+    request.onmerchantvalidation = (event) => {
+      log(`Validation triggered for URL: ${event.validationURL}`);
+
+      const sessionPromise = fetch("/validate-merchant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          validationURL: event.validationURL,
+          initiativeContext: window.location.hostname, // Important: no protocol/path
+        }),
+      })
+        .then((res) => {
+          if (!res.ok)
+            throw new Error(`Server validation failed: ${res.statusText}`);
+          return res.json();
+        })
+        .then((session) => {
+          log("Merchant Session received from server.");
+          return session;
+        });
+
+      // Pass the promise to complete validation
+      event.complete(sessionPromise);
+    };
+
+    // 2. REQUIRED: Avoid timeout errors by handling method/shipping changes
+    request.onpaymentmethodchange = (event) => {
+      log("Payment method changed, updating sheet...");
+      event.updateWith({});
+    };
+
+    // 3. Authorization
     const response = await request.show();
+    log("User authorized payment.");
 
-    // Use the token in response.details.token to charge the card on your backend
-    console.log("Payment Token Received:", response.details.token);
+    // Process payment token with your backend
+    const paymentResult = await processPayment(response.details);
 
-    // Simulate processing delay
-    setTimeout(async () => {
-      // "success" or "fail"
+    if (paymentResult.success) {
       await response.complete("success");
-      log("Transaction Completed Successfully!");
-    }, 1000);
-  } catch (e) {
-    log("Payment cancelled or failed.");
+      log("Transaction Success!");
+    } else {
+      await response.complete("fail");
+      log("Transaction Failed on Server.");
+    }
+  } catch (err) {
+    // Critical for debugging: AbortError often means a config issue or user cancel
+    log(`Error: ${err.name} - ${err.message}`);
+    console.error("Full Error Object:", err);
   }
+}
+
+// Utility for server processing
+async function processPayment(details) {
+  log("Sending token to backend for processing...");
+  // Simulate backend call
+  return new Promise((resolve) =>
+    setTimeout(() => resolve({ success: true }), 1000)
+  );
 }
 
 function log(msg) {
