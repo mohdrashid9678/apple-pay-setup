@@ -33,12 +33,15 @@ app.post("/validate-merchant", async (req, res) => {
       },
       { httpsAgent, headers: { "Content-Type": "application/json" } }
     );
+    console.log(
+      "Merchant validation response:",
+      response.status,
+      "DATA:",
+      response.data
+    );
     res.json(response.data);
   } catch (error) {
-    console.error(
-      "Validation Error:",
-      error.response ? error.response.data : error.message
-    );
+    console.log("Error during merchant validation:", error);
     res.status(500).send("Validation failed");
   }
 });
