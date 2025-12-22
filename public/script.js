@@ -18,7 +18,7 @@ async function onApplePayClicked() {
       supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
-        merchantIdentifier: "merchant.com.thankiopay",
+        merchantIdentifier: "internal.test.robonito.com",
         merchantCapabilities: ["supports3DS"],
         supportedNetworks: ["visa", "masterCard", "amex", "discover"],
         countryCode: "US",
