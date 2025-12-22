@@ -19,7 +19,7 @@ async function onApplePayClicked() {
       supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
-        merchantIdentifier: "merchant.com.yourdomain.test", // Must match backend
+        merchantIdentifier: "merchant.com.thankiopay",
         merchantCapabilities: ["supports3DS"],
         supportedNetworks: ["visa", "masterCard", "amex", "discover"],
         countryCode: "US",
@@ -30,7 +30,7 @@ async function onApplePayClicked() {
   // 3. Define Payment Details (Total, items)
   const details = {
     total: {
-      label: "My Store",
+      label: "Robonito Store",
       amount: { currency: "USD", value: "10.00" },
     },
   };
@@ -52,7 +52,10 @@ async function onApplePayClicked() {
     const merchantSessionPromise = fetch("/validate-merchant", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ validationURL: event.validationURL }),
+      body: JSON.stringify({
+        validationURL: event.validationURL,
+        origin: window.location.origin,
+      }),
     })
       .then((res) => res.json())
       .then((session) => {
@@ -87,81 +90,4 @@ async function onApplePayClicked() {
 function log(msg) {
   document.getElementById("log").innerText = msg;
   console.log(msg);
-}
-
-function onApplePayButtonClicked() {
-  if (!ApplePaySession) {
-    return;
-  }
-
-  // Define ApplePayPaymentRequest
-  const request = {
-    countryCode: "US",
-    currencyCode: "USD",
-    merchantCapabilities: ["supports3DS"],
-    supportedNetworks: ["visa", "masterCard", "amex", "discover"],
-    total: {
-      label: "Demo (Card is not charged)",
-      type: "final",
-      amount: "1.99",
-    },
-  };
-
-  // Create ApplePaySession
-  const session = new ApplePaySession(3, request);
-
-  session.onvalidatemerchant = async (event) => {
-    // Call your own server to request a new merchant session.
-    const merchantSession = await validateMerchant();
-    session.completeMerchantValidation(merchantSession);
-  };
-
-  session.onpaymentmethodselected = (event) => {
-    // Define ApplePayPaymentMethodUpdate based on the selected payment method.
-    // No updates or errors are needed, pass an empty object.
-    const update = {};
-    session.completePaymentMethodSelection(update);
-  };
-
-  session.onshippingmethodselected = (event) => {
-    // Define ApplePayShippingMethodUpdate based on the selected shipping method.
-    // No updates or errors are needed, pass an empty object.
-    const update = {};
-    session.completeShippingMethodSelection(update);
-  };
-
-  session.onshippingcontactselected = (event) => {
-    // Define ApplePayShippingContactUpdate based on the selected shipping contact.
-    const update = {};
-    session.completeShippingContactSelection(update);
-  };
-
-  session.onpaymentauthorized = (event) => {
-    // Define ApplePayPaymentAuthorizationResult
-    const result = {
-      status: ApplePaySession.STATUS_SUCCESS,
-    };
-    session.completePayment(result);
-  };
-
-  session.oncouponcodechanged = (event) => {
-    // Define ApplePayCouponCodeUpdate
-    const newTotal = calculateNewTotal(event.couponCode);
-    const newLineItems = calculateNewLineItems(event.couponCode);
-    const newShippingMethods = calculateNewShippingMethods(event.couponCode);
-    const errors = calculateErrors(event.couponCode);
-
-    session.completeCouponCodeChange({
-      newTotal: newTotal,
-      newLineItems: newLineItems,
-      newShippingMethods: newShippingMethods,
-      errors: errors,
-    });
-  };
-
-  session.oncancel = (event) => {
-    // Payment canceled by WebKit
-  };
-
-  session.begin();
 }
