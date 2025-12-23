@@ -15,7 +15,7 @@ if (window.PaymentRequest) {
 async function onApplePayClicked() {
   const methods = [
     {
-      supportedMethods: "basic-card",
+      supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
         merchantIdentifier: "merchant.com.thankiopay",
@@ -34,19 +34,6 @@ async function onApplePayClicked() {
   };
 
   try {
-    // This check tells you if Safari sees a valid card for this Merchant ID
-    // const canPay = await ApplePaySession.canMakePaymentsWithActiveCard(
-    //   "merchant.com.thankiopay"
-    // );
-    // log("Can pay with active card: " + canPay);
-
-    // if (!canPay) {
-    //   log(
-    //     "ABORTING: No active card found. Check if you are using a Sandbox account."
-    //   );
-    //   return;
-    // }
-
     const request = new PaymentRequest(methods, details);
     console.log("PaymentRequest created:", request);
 
