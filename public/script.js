@@ -15,6 +15,7 @@ if (window.PaymentRequest) {
 async function onApplePayClicked() {
   const methods = [
     {
+      supportedMethods: "basic-card",
       data: {
         version: 3,
         merchantIdentifier: "merchant.com.thankiopay",
