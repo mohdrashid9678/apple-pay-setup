@@ -19,6 +19,23 @@ const httpsAgent = new https.Agent({
   key: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.key")),
 });
 
+// This explicitly handles the request Safari makes
+app.get(
+  "/.well-known/apple-developer-merchantid-domain-association",
+  (req, res) => {
+    // Point this to your actual file (even if it has .txt on your disk)
+    const filePath = path.join(
+      __dirname,
+      ".well-known",
+      "apple-developer-merchantid-domain-association.txt"
+    );
+
+    // Set the exact content-type Apple expects
+    res.setHeader("Content-Type", "text/plain");
+    res.sendFile(filePath);
+  }
+);
+
 app.post("/validate-merchant", async (req, res) => {
   const { validationURL, domainName } = req.body;
 
