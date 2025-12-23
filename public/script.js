@@ -15,12 +15,11 @@ if (window.PaymentRequest) {
 async function onApplePayClicked() {
   const methods = [
     {
-      supportedMethods: "https://apple.com/apple-pay",
       data: {
         version: 3,
         merchantIdentifier: "merchant.com.thankiopay",
         merchantCapabilities: ["supports3DS"],
-        supportedNetworks: ["visa", "masterCard", "amex", "discover"],
+        supportedNetworks: ["visa"],
         countryCode: "US",
       },
     },
