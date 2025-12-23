@@ -35,6 +35,7 @@ async function onApplePayClicked() {
 
   try {
     const request = new PaymentRequest(methods, details);
+    console.log("PaymentRequest created:", request);
 
     // FIX 1: Explicitly handle the validation event
     request.onmerchantvalidation = (event) => {
@@ -68,6 +69,7 @@ async function onApplePayClicked() {
     log("Payment authorized!");
     await response.complete("success");
   } catch (err) {
+    console.error("Payment Request failed:", err);
     if (err.name === "AbortError") {
       log("AbortError: Sheet closed (Check Domain Verification or Certs)");
     } else {
