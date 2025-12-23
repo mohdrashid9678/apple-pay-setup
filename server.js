@@ -15,7 +15,7 @@ const MERCHANT_IDENTIFIER = "merchant.com.thankiopay";
 const DISPLAY_NAME = "Robonito Test Store";
 
 const httpsAgent = new https.Agent({
-  cert: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.pem")),
+  cert: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.crt")),
   key: fs.readFileSync(path.join(__dirname, "./certs/MerchantId.key")),
 });
 
