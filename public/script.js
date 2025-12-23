@@ -34,17 +34,17 @@ async function onApplePayClicked() {
 
   try {
     // This check tells you if Safari sees a valid card for this Merchant ID
-    const canPay = await ApplePaySession.canMakePaymentsWithActiveCard(
-      "merchant.com.thankiopay"
-    );
-    log("Can pay with active card: " + canPay);
+    // const canPay = await ApplePaySession.canMakePaymentsWithActiveCard(
+    //   "merchant.com.thankiopay"
+    // );
+    // log("Can pay with active card: " + canPay);
 
-    if (!canPay) {
-      log(
-        "ABORTING: No active card found. Check if you are using a Sandbox account."
-      );
-      return;
-    }
+    // if (!canPay) {
+    //   log(
+    //     "ABORTING: No active card found. Check if you are using a Sandbox account."
+    //   );
+    //   return;
+    // }
 
     const request = new PaymentRequest(methods, details);
     console.log("PaymentRequest created:", request);
